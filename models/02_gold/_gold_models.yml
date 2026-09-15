@@ -1,0 +1,23 @@
+version: 2
+
+models:
+  - name: fct_orders
+    columns:
+      - name: order_id
+        data_tests:
+          - unique # guards the grain: one row per order
+          - not_null
+      - name: customer_id
+        data_tests:
+          - not_null
+          - relationships: # every order belongs to a known customer
+              arguments:
+                to: ref('dim_customers')
+                field: customer_id
+
+  - name: dim_customers
+    columns:
+      - name: customer_id
+        data_tests:
+          - unique # guards the grain: one row per customer
+          - not_null

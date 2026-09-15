@@ -46,6 +46,8 @@ The project uses **numbered medallion layers**, which is the user's preferred co
 - Keep the standard model prefixes (`stg_`, `dim_`, `fct_`). Model names must be unique project-wide, regardless of folder.
 - Materializations and schemas are set per folder in `dbt_project.yml`, not in each model. Folder keys starting with digits are quoted there.
 - Seeds are read via `source()`, not `ref()`, to imitate an external loader. So `dbt build` doesn't order seeds before silver; run `dbt seed` first on a fresh database.
+- Generic tests live in one YAML per layer (`_silver_models.yml`, `_gold_models.yml`) under `data_tests:`. dbt 1.12 expects test arguments nested under `arguments:`. Singular (SQL) tests live in `tests/` and pass when they return zero rows.
+- Every key column gets `unique` + `not_null`, because that's what guards each model's grain. In `dbt build`, a failing test SKIPs all downstream models.
 
 **Schema naming:** the profile's target schema is `dev`. dbt's default `generate_schema_name` *appends* the custom schema (`dev` + `00_bronze` → `dev_00_bronze`). The `dev_` prefix is also what makes digit-leading names valid unquoted Postgres identifiers.
 
