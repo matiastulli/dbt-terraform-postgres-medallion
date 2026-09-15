@@ -1,0 +1,12 @@
+version: 2
+
+sources:
+  - name: jaffle_shop
+    description: Raw Jaffle Shop data. Here it comes from `dbt seed`; in a real project an ingestion tool (Fivetran, Airbyte...) would load it.
+    # Seeds land in <target schema>_00_bronze (dev_00_bronze), so build the name from
+    # the target instead of hardcoding it. Switching to a prod target then just works.
+    schema: "{{ target.schema }}_00_bronze"
+    tables:
+      - name: raw_customers
+      - name: raw_orders
+      - name: raw_payments

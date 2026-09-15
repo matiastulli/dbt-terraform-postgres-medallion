@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Purpose
 
 A personal **learning project for dbt**. It runs fully local with dbt-core and the free `dbt-postgres` adapter, with no dbt Cloud. It uses the dbt Labs **Jaffle Shop** dataset. The user is a freelancer learning dbt **step by step**, so explain each new dbt concept as you introduce it. Build in stages rather than scaffolding everything at once:
-seeds → sources + staging → marts → tests → docs → snapshots → incremental models → macros/packages.
+seeds → sources + silver → gold → tests → docs → snapshots → incremental models → macros/packages.
 
 ## Environment
 
@@ -27,6 +27,7 @@ dbt test                        # run data tests
 dbt build                       # seed + run + test + snapshot in DAG order
 dbt build --select stg_orders   # a single model (plus its tests)
 dbt build --select +fct_orders  # a model and everything upstream
+dbt build --select 01_silver    # a whole layer (folder)
 dbt test --select stg_orders    # tests for a single model
 dbt docs generate && dbt docs serve   # lineage/docs site on localhost:8080
 psql -h localhost -U dbt_user -d dbt_learning   # inspect results
@@ -34,24 +35,34 @@ psql -h localhost -U dbt_user -d dbt_learning   # inspect results
 
 ## Layout conventions
 
-- `seeds/raw_*.csv` hold the Jaffle Shop raw data. `raw_payments.amount` is in **cents**.
-- `models/staging/`: one `stg_<entity>` view per source table (renaming, casting). Materialized as views.
-- `models/marts/`: business-facing `dim_`/`fct_` tables. Materialized as tables.
-- Folder-level materializations and schemas are set in `dbt_project.yml`, not in each model.
+The project uses **numbered medallion layers**, which is the user's preferred convention. Folder name = custom schema name:
+
+| Layer | Where | Schema | Contents |
+|---|---|---|---|
+| Bronze | `seeds/raw_*.csv`, `models/00_bronze/_sources.yml` | `dev_00_bronze` | Raw Jaffle Shop data, no SQL models. `raw_payments.amount` is in **cents**. |
+| Silver | `models/01_silver/` | `dev_01_silver` | One `stg_<entity>` **view** per source (rename, cast). Reads only via `source()`. |
+| Gold | `models/02_gold/` | `dev_02_gold` | Business-facing `dim_`/`fct_` **tables**, built on silver via `ref()`. |
+
+- Keep the standard model prefixes (`stg_`, `dim_`, `fct_`). Model names must be unique project-wide, regardless of folder.
+- Materializations and schemas are set per folder in `dbt_project.yml`, not in each model. Folder keys starting with digits are quoted there.
+- Seeds are read via `source()`, not `ref()`, to imitate an external loader. So `dbt build` doesn't order seeds before silver; run `dbt seed` first on a fresh database.
+
+**Schema naming:** the profile's target schema is `dev`. dbt's default `generate_schema_name` *appends* the custom schema (`dev` + `00_bronze` → `dev_00_bronze`). The `dev_` prefix is also what makes digit-leading names valid unquoted Postgres identifiers.
 
 ## Terraform
 
-The user is also learning **Terraform**, step by step in the same style. `terraform/` manages the local Postgres infrastructure dbt runs on, using the `cyrilgdn/postgresql` provider: roles, databases and, later, schemas and grants. Nothing uses the cloud. State is local in `terraform/terraform.tfstate`, which is gitignored because it holds the password in plain text. Terraform connects as the Homebrew superuser `juanmatiastulli` with trust auth. The `dbt_user` password comes from `TF_VAR_dbt_user_password`, set in `.env`.
+The user is also learning **Terraform**, step by step in the same style. `terraform/` manages the local Postgres infrastructure dbt runs on, using the `cyrilgdn/postgresql` provider: roles, databases, schemas and grants. Nothing uses the cloud. State is local in `terraform/terraform.tfstate`, which is gitignored because it holds passwords in plain text. Terraform connects as the Homebrew superuser `juanmatiastulli` with trust auth. Role passwords come from `TF_VAR_dbt_user_password` and `TF_VAR_analyst_password`, set in `.env`.
 
-Terraform manages the `dbt_user` role, the `dbt_learning` database and the dbt schemas (`local.dbt_schemas` in `terraform/schemas.tf`). It also manages a read-only `analyst` role for DBeaver, with password `TF_VAR_analyst_password`. Its SELECT access comes from both a grant on existing tables and default privileges for tables `dbt_user` creates later, because dbt rebuilds models on every run. **If you add a new dbt `+schema`, also add `dev_<name>` to `local.dbt_schemas`.** Otherwise the analyst can't read it. `dbt_user`, `dbt_learning` and `dev_raw` were created before Terraform and adopted with `import` blocks. Change these objects through Terraform, not with manual `psql` DDL, or state will drift.
+Terraform manages the `dbt_user` role, the `dbt_learning` database and the dbt layer schemas (`local.dbt_schemas` in `terraform/schemas.tf`). It also manages a read-only `analyst` role for DBeaver. The analyst's SELECT access comes from both a grant on existing tables and default privileges for tables `dbt_user` creates later, because dbt rebuilds models on every run. **If you add a new dbt `+schema`, also add `dev_<name>` to `local.dbt_schemas`.** Otherwise the analyst can't read it.
+
+`dbt_user`, `dbt_learning` and the bronze schema (originally `dev_raw`) were created before Terraform and adopted with `import` blocks. The schemas were later renamed to the medallion names using `moved` blocks (`terraform/moved.tf`). Postgres renames schemas in place, but grants on them are replaced. Change these objects through Terraform, not with manual `psql` DDL, or state will drift.
 
 The user wants to read plans before applying. Save them with `plan -out=tfplan` and don't `apply` without their go-ahead.
 
 ```sh
 source .env
-terraform -chdir=terraform plan     # preview changes
-terraform -chdir=terraform apply
+terraform -chdir=terraform plan -out=tfplan   # preview changes
+terraform -chdir=terraform show tfplan
+terraform -chdir=terraform apply tfplan
 terraform -chdir=terraform fmt && terraform -chdir=terraform validate
 ```
-
-**Schema naming:** the profile's target schema is `dev`. dbt's default `generate_schema_name` *appends* custom schemas, so seeds land in `dev_raw`, staging in `dev_staging` and marts in `dev_marts`. Look there in DBeaver/psql, not in `raw`/`staging`.

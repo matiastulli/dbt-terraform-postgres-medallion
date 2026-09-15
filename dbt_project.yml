@@ -14,15 +14,17 @@ analysis-paths: ["analyses"]
 target-path: "target"
 clean-targets: ["target", "dbt_packages"]
 
+# Medallion layers. Folder names match schema names; dbt prefixes the target
+# schema, so these land in dev_00_bronze, dev_01_silver, dev_02_gold.
 seeds:
   jaffle_shop:
-    +schema: raw
+    +schema: 00_bronze
 
 models:
   jaffle_shop:
-    staging:
+    "01_silver":
       +materialized: view
-      +schema: staging
-    marts:
+      +schema: 01_silver
+    "02_gold":
       +materialized: table
-      +schema: marts
+      +schema: 02_gold
