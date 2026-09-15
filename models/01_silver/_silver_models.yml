@@ -2,35 +2,54 @@ version: 2
 
 models:
   - name: stg_customers
+    description: Cleaned customers. One row per customer.
     columns:
       - name: customer_id
+        description: Primary key of a customer.
         data_tests:
           - unique
           - not_null
+      - name: first_name
+        description: Customer's first name.
+      - name: last_name
+        description: Customer's last name initial.
 
   - name: stg_orders
+    description: Cleaned orders. One row per order.
     columns:
       - name: order_id
+        description: Primary key of an order.
         data_tests:
           - unique
           - not_null
       - name: customer_id
+        description: The customer who placed the order (renamed from `user_id`).
         data_tests:
           - not_null
+      - name: order_date
+        description: Date the order was placed.
       - name: status
+        description: '{{ doc("order_status") }}'
         data_tests:
           - accepted_values:
               arguments:
                 values: ["placed", "shipped", "completed", "return_pending", "returned"]
 
   - name: stg_payments
+    description: Cleaned payments. One row per payment; an order can have several.
     columns:
       - name: payment_id
+        description: Primary key of a payment.
         data_tests:
           - unique
           - not_null
+      - name: order_id
+        description: The order this payment belongs to.
       - name: payment_method
+        description: How the payment was made.
         data_tests:
           - accepted_values:
               arguments:
                 values: ["credit_card", "coupon", "bank_transfer", "gift_card"]
+      - name: amount
+        description: '{{ doc("amount_dollars") }}'

@@ -2,22 +2,53 @@ version: 2
 
 models:
   - name: fct_orders
+    description: Orders with their payments split by method. One row per order.
     columns:
       - name: order_id
+        description: Primary key of an order.
         data_tests:
           - unique # guards the grain: one row per order
           - not_null
       - name: customer_id
+        description: The customer who placed the order. Joins to `dim_customers`.
         data_tests:
           - not_null
           - relationships: # every order belongs to a known customer
               arguments:
                 to: ref('dim_customers')
                 field: customer_id
+      - name: order_date
+        description: Date the order was placed.
+      - name: status
+        description: '{{ doc("order_status") }}'
+      - name: credit_card_amount
+        description: Amount paid by credit card (0 if none).
+      - name: coupon_amount
+        description: Amount paid by coupon (0 if none).
+      - name: bank_transfer_amount
+        description: Amount paid by bank transfer (0 if none).
+      - name: gift_card_amount
+        description: Amount paid by gift card (0 if none).
+      - name: amount
+        description: Total paid for the order across all methods, in dollars.
 
   - name: dim_customers
+    description: Customers with order history and lifetime value. One row per customer, including customers without orders.
     columns:
       - name: customer_id
+        description: Primary key of a customer.
         data_tests:
           - unique # guards the grain: one row per customer
           - not_null
+      - name: first_name
+        description: Customer's first name.
+      - name: last_name
+        description: Customer's last name initial.
+      - name: first_order_date
+        description: Date of the customer's first order (null if no orders).
+      - name: most_recent_order_date
+        description: Date of the customer's latest order (null if no orders).
+      - name: number_of_orders
+        description: Count of orders placed by the customer.
+      - name: lifetime_value
+        description: Total paid by the customer across all orders, in dollars.

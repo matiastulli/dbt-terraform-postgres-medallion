@@ -22,6 +22,10 @@ seeds:
 
 models:
   jaffle_shop:
+    # Write YAML descriptions into Postgres as COMMENTs, so DBeaver shows them too.
+    +persist_docs:
+      relation: true
+      columns: true
     "01_silver":
       +materialized: view
       +schema: 01_silver

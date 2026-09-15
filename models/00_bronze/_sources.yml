@@ -8,5 +8,11 @@ sources:
     schema: "{{ target.schema }}_00_bronze"
     tables:
       - name: raw_customers
+        description: One row per customer, as exported from the shop app.
       - name: raw_orders
+        description: One row per order. `user_id` is the customer's id.
       - name: raw_payments
+        description: One row per payment. An order can have several payments (e.g. coupon + credit card).
+        columns:
+          - name: amount
+            description: Payment amount in **cents** (integer).
