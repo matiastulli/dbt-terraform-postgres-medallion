@@ -37,9 +37,9 @@ jobs:
       TF_VAR_analyst_password: ci_analyst_password
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
 
       - name: Terraform fmt
         run: terraform -chdir=terraform fmt -check -recursive
@@ -52,7 +52,7 @@ jobs:
       - name: Terraform apply (database, roles, schemas, grants)
         run: terraform -chdir=terraform apply -input=false -auto-approve
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: pip
@@ -76,7 +76,7 @@ jobs:
         run: dbt docs generate
 
       - name: Upload dbt docs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dbt-docs
           path: |
