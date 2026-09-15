@@ -43,7 +43,9 @@ psql -h localhost -U dbt_user -d dbt_learning   # inspect results
 
 The user is also learning **Terraform**, step by step in the same style. `terraform/` manages the local Postgres infrastructure dbt runs on, using the `cyrilgdn/postgresql` provider: roles, databases and, later, schemas and grants. Nothing uses the cloud. State is local in `terraform/terraform.tfstate`, which is gitignored because it holds the password in plain text. Terraform connects as the Homebrew superuser `juanmatiastulli` with trust auth. The `dbt_user` password comes from `TF_VAR_dbt_user_password`, set in `.env`.
 
-`dbt_user` and `dbt_learning` were originally created by hand and adopted into state with `import` blocks (`terraform/imports.tf`). Change these objects through Terraform, not with manual `psql` DDL, or state will drift.
+Terraform manages the `dbt_user` role, the `dbt_learning` database and the dbt schemas (`local.dbt_schemas` in `terraform/schemas.tf`). It also manages a read-only `analyst` role for DBeaver, with password `TF_VAR_analyst_password`. Its SELECT access comes from both a grant on existing tables and default privileges for tables `dbt_user` creates later, because dbt rebuilds models on every run. **If you add a new dbt `+schema`, also add `dev_<name>` to `local.dbt_schemas`.** Otherwise the analyst can't read it. `dbt_user`, `dbt_learning` and `dev_raw` were created before Terraform and adopted with `import` blocks. Change these objects through Terraform, not with manual `psql` DDL, or state will drift.
+
+The user wants to read plans before applying. Save them with `plan -out=tfplan` and don't `apply` without their go-ahead.
 
 ```sh
 source .env

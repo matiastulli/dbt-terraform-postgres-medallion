@@ -1,13 +1,7 @@
-# These objects were created by hand with psql before Terraform existed.
-# import blocks adopt them into state instead of trying to create duplicates.
-# After the first successful apply they are no-ops and can be deleted.
-
+# dev_raw was created by `dbt seed` before Terraform managed schemas; adopt it
+# instead of creating a duplicate. The other dbt schemas don't exist yet, so
+# Terraform creates them. After apply this block is a no-op and can be deleted.
 import {
-  to = postgresql_role.dbt_user
-  id = "dbt_user"
-}
-
-import {
-  to = postgresql_database.dbt_learning
-  id = "dbt_learning"
+  to = postgresql_schema.dbt["dev_raw"]
+  id = "dbt_learning.dev_raw"
 }

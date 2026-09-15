@@ -9,3 +9,4 @@ logs/
 .terraform/
 *.tfstate
 *.tfstate.*
+tfplan

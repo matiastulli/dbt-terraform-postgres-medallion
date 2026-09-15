@@ -19,3 +19,9 @@ variable "dbt_user_password" {
   type        = string
   sensitive   = true
 }
+
+variable "analyst_password" {
+  description = "Password for the read-only analyst role. Set via TF_VAR_analyst_password (see ../.env)"
+  type        = string
+  sensitive   = true
+}
