@@ -33,6 +33,10 @@ dbt docs generate && dbt docs serve   # lineage/docs site on localhost:8080
 psql -h localhost -U dbt_user -d dbt_learning   # inspect results
 ```
 
+`README.md` is the user's full command reference for dbt, Terraform and psql. Keep it up to date when commands or setup change.
+
+**Never run `--empty` against the `dev` target.** It rebuilds the selected models with zero rows, replacing the real views and tables. Use `dbt show` / `dbt compile` to check SQL instead.
+
 ## Layout conventions
 
 The project uses **numbered medallion layers**, which is the user's preferred convention. Folder name = custom schema name:
