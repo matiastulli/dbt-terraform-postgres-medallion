@@ -1,0 +1,11 @@
+.venv/
+target/
+dbt_packages/
+logs/
+.env
+.user.yml
+
+# Terraform (state holds secrets in plain text; the lock file IS committed)
+.terraform/
+*.tfstate
+*.tfstate.*
