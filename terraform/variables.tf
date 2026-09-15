@@ -9,9 +9,8 @@ variable "pg_port" {
 }
 
 variable "pg_admin_user" {
-  description = "Postgres superuser Terraform connects as"
+  description = "Postgres superuser Terraform connects as. Set via TF_VAR_pg_admin_user (Homebrew: your macOS user; CI: postgres)"
   type        = string
-  default     = "juanmatiastulli"
 }
 
 variable "dbt_user_password" {

@@ -7,6 +7,6 @@ jaffle_shop:
       port: 5432
       user: dbt_user
       password: "{{ env_var('DBT_PG_PASSWORD') }}"
-      dbname: dbt_learning
+      dbname: "{{ env_var('DBT_PG_DBNAME', 'dbt_learning') }}"
       schema: dev
       threads: 4
