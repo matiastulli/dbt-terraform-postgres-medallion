@@ -1,14 +1,33 @@
 -- Grain: one row per order.
 
+-- Overrides the folder default (table) from dbt_project.yml.
+{{
+    config(
+        materialized='incremental',
+        unique_key='order_id',
+        incremental_strategy='merge',
+        on_schema_change='fail'
+    )
+}}
+
 with orders as (
 
     select * from {{ ref('stg_orders') }}
+
+    {% if is_incremental() %}
+    -- Incremental runs only reprocess recent orders. The 3-day lookback re-reads
+    -- orders that may have changed since the last run (status updates, new payments);
+    -- merge on order_id then updates those rows instead of duplicating them.
+    -- Changes to orders older than the window are NOT picked up: use --full-refresh.
+    where order_date >= (select max(order_date) - interval '3 days' from {{ this }})
+    {% endif %}
 
 ),
 
 payments as (
 
     select * from {{ ref('stg_payments') }}
+    where order_id in (select order_id from orders)
 
 ),
 

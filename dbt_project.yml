@@ -20,6 +20,11 @@ seeds:
   jaffle_shop:
     +schema: 00_bronze
 
+# Snapshots are history of raw data, so they live in the bronze layer too.
+snapshots:
+  jaffle_shop:
+    +schema: 00_bronze
+
 models:
   jaffle_shop:
     # Write YAML descriptions into Postgres as COMMENTs, so DBeaver shows them too.

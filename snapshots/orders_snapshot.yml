@@ -1,0 +1,14 @@
+snapshots:
+  - name: orders_snapshot
+    description: >
+      History of raw orders (SCD type 2). A new row is added every time an order's
+      status changes; dbt_valid_from / dbt_valid_to show when each version was true.
+      The current version has dbt_valid_to = null.
+    # Snapshot the raw source, not a silver model: history should capture what the
+    # source system said, before any of our transformation logic.
+    relation: source('jaffle_shop', 'raw_orders')
+    config:
+      unique_key: id
+      # raw_orders has no updated_at column, so compare column values on each run.
+      strategy: check
+      check_cols: ["status"]
