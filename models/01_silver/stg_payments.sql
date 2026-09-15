@@ -10,8 +10,8 @@ renamed as (
         id as payment_id,
         order_id,
         payment_method,
-        -- raw amount is stored in cents
-        (amount / 100.0)::numeric(16, 2) as amount
+        -- raw amount is stored in cents (macro lives in macros/cents_to_dollars.sql)
+        {{ cents_to_dollars('amount') }} as amount
 
     from source
 

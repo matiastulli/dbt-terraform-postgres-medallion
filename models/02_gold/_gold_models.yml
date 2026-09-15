@@ -3,6 +3,11 @@ version: 2
 models:
   - name: fct_orders
     description: Orders with their payments split by method. One row per order.
+    data_tests:
+      # Model-level test from the dbt_utils package: every row must satisfy the expression.
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "credit_card_amount + coupon_amount + bank_transfer_amount + gift_card_amount = amount"
     columns:
       - name: order_id
         description: Primary key of an order.
@@ -31,6 +36,10 @@ models:
         description: Amount paid by gift card (0 if none).
       - name: amount
         description: Total paid for the order across all methods, in dollars.
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
 
   - name: dim_customers
     description: Customers with order history and lifetime value. One row per customer, including customers without orders.
@@ -50,5 +59,9 @@ models:
         description: Date of the customer's latest order (null if no orders).
       - name: number_of_orders
         description: Count of orders placed by the customer.
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
       - name: lifetime_value
         description: Total paid by the customer across all orders, in dollars.

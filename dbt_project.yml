@@ -14,6 +14,12 @@ analysis-paths: ["analyses"]
 target-path: "target"
 clean-targets: ["target", "dbt_packages"]
 
+# Project-wide variables, read with var('name') in models, tests and macros.
+vars:
+  # Single source of truth: drives the per-method columns in fct_orders and the
+  # accepted_values test on stg_payments.payment_method. Order = column order.
+  payment_methods: ["credit_card", "coupon", "bank_transfer", "gift_card"]
+
 # Medallion layers. Folder names match schema names; dbt prefixes the target
 # schema, so these land in dev_00_bronze, dev_01_silver, dev_02_gold.
 seeds:

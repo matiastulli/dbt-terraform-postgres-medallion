@@ -50,6 +50,6 @@ models:
         data_tests:
           - accepted_values:
               arguments:
-                values: ["credit_card", "coupon", "bank_transfer", "gift_card"]
+                values: "{{ var('payment_methods') }}"
       - name: amount
         description: '{{ doc("amount_dollars") }}'
