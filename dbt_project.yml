@@ -19,6 +19,9 @@ vars:
   # Single source of truth: drives the per-method columns in fct_orders and the
   # accepted_values test on stg_payments.payment_method. Order = column order.
   payment_methods: ["credit_card", "coupon", "bank_transfer", "gift_card"]
+  # Valid order statuses: drives the quarantine rule in base_orders and the
+  # accepted_values test on stg_orders.status.
+  order_statuses: ["placed", "shipped", "completed", "return_pending", "returned"]
 
 # Medallion layers. Folder names match schema names; dbt prefixes the target
 # schema, so these land in dev_00_bronze, dev_01_silver, dev_02_gold.
@@ -37,9 +40,16 @@ models:
     +persist_docs:
       relation: true
       columns: true
+    # One subfolder per source system (jaffle_shop/, ...). Subfolders inherit
+    # the layer's schema and materialization.
     "01_silver":
       +materialized: view
       +schema: 01_silver
+      jaffle_shop:
+        # base_* models validate raw rows for stg_* and stg_*_quarantine.
+        # Ephemeral = compiled as a CTE into those models, never built in Postgres.
+        base:
+          +materialized: ephemeral
     "02_gold":
       +materialized: table
       +schema: 02_gold
