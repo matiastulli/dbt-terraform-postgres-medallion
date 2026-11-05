@@ -10,3 +10,7 @@ logs/
 *.tfstate
 *.tfstate.*
 tfplan
+
+# Claude Code local settings and macOS
+.claude/settings.local.json
+.DS_Store
