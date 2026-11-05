@@ -80,6 +80,10 @@ terraform -chdir=terraform apply tfplan
 terraform -chdir=terraform fmt && terraform -chdir=terraform validate
 ```
 
+## Checks
+
+Before saying a step is done: `dbt build` (after `source .venv/bin/activate && source .env`) and `terraform -chdir=terraform fmt && terraform -chdir=terraform validate`.
+
 ## Agents
 
 `.claude/agents/reviewer.md` and `security.md` hold this repo's review checklist and leak checks; they override the global agents of the same name in `~/.claude`. Every repo keeps these two and no others.
