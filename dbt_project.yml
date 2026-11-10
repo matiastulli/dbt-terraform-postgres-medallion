@@ -22,6 +22,10 @@ vars:
   # Valid order statuses: drives the filter in int_orders and the
   # accepted_values test on int_orders.status.
   order_statuses: ["placed", "shipped", "completed", "return_pending", "returned"]
+  # Calendar range of dim_dates (end is exclusive). Must cover every order_date;
+  # the relationships tests on the facts fail if it doesn't.
+  dim_dates_start: "2018-01-01"
+  dim_dates_end: "2019-01-01"
 
 # Medallion layers. Folder names match schema names; dbt prefixes the target
 # schema, so these land in dev_00_bronze, dev_01_silver, dev_02_gold.
@@ -29,14 +33,6 @@ vars:
 # and a node colour in the docs lineage graph. Sources can't be coloured, so
 # they stay dbt's default green.
 seeds:
-  jaffle_shop:
-    +schema: 00_bronze
-    +tags: ["bronze"]
-    +docs:
-      node_color: "#CD7F32"
-
-# Snapshots are history of raw data, so they live in the bronze layer too.
-snapshots:
   jaffle_shop:
     +schema: 00_bronze
     +tags: ["bronze"]
