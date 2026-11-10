@@ -1,10 +1,10 @@
 -- Singular test: passes when it returns zero rows.
 -- Revenue must survive the silver -> gold joins without being lost or double-counted
--- (e.g. payments for orders missing from stg_orders would be dropped).
+-- (e.g. payments for orders missing from int_orders would be dropped).
 
 with silver as (
 
-    select sum(amount) as total from {{ ref('stg_payments') }}
+    select sum(amount) as total from {{ ref('int_payments') }}
 
 ),
 

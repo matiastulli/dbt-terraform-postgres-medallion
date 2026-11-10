@@ -12,7 +12,7 @@
 
 with orders as (
 
-    select * from {{ ref('stg_orders') }}
+    select * from {{ ref('int_orders') }}
 
     {% if is_incremental() %}
     -- Incremental runs only reprocess recent orders. The 3-day lookback re-reads
@@ -26,7 +26,7 @@ with orders as (
 
 payments as (
 
-    select * from {{ ref('stg_payments') }}
+    select * from {{ ref('int_payments') }}
     where order_id in (select order_id from orders)
 
 ),

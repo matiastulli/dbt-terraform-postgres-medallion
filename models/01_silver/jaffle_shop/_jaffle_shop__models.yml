@@ -14,15 +14,23 @@ models:
       - name: last_name
         description: Customer's last name initial.
 
+  - name: int_customers
+    description: Valid customers. One row per customer. No rules yet, so a copy of `stg_customers`; gold and `int_orders` read this model.
+    columns:
+      - name: customer_id
+        description: Primary key of a customer.
+        data_tests:
+          - unique
+          - not_null
+      - name: first_name
+        description: Customer's first name.
+      - name: last_name
+        description: Customer's last name initial.
+
   # --- orders -----------------------------------------------------------------
 
-  - name: base_orders
-    description: >
-      Ephemeral (a CTE, not a database object). Raw orders renamed, with a
-      `quarantine_reason` per row. Feeds `stg_orders` and `stg_orders_quarantine`.
-
   - name: stg_orders
-    description: Cleaned, valid orders. One row per order. Invalid rows are in `stg_orders_quarantine`.
+    description: Raw orders renamed. One row per source row, including invalid ones; `int_orders` filters them.
     columns:
       - name: order_id
         description: Primary key of an order.
@@ -30,11 +38,34 @@ models:
           - unique
           - not_null
       - name: customer_id
-        description: The customer who placed the order (renamed from `user_id`).
-        data_tests:
-          - not_null
+        description: The customer who placed the order (renamed from `user_id`). May not exist in `int_customers`.
       - name: order_date
         description: Date the order was placed.
+      - name: status
+        description: Status as it came from the source. May be outside `var('order_statuses')`.
+
+  - name: int_orders
+    description: >
+      Valid orders only. One row per order. Drops orders with a null id or date,
+      a status not in `var('order_statuses')`, or a customer not in `int_customers`.
+    columns:
+      - name: order_id
+        description: Primary key of an order.
+        data_tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: The customer who placed the order. Always in `int_customers`.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('int_customers')
+                field: customer_id
+      - name: order_date
+        description: Date the order was placed.
+        data_tests:
+          - not_null
       - name: status
         description: '{{ doc("order_status") }}'
         data_tests:
@@ -42,36 +73,10 @@ models:
               arguments:
                 values: "{{ var('order_statuses') }}"
 
-  - name: stg_orders_quarantine
-    description: '{{ doc("quarantine_model") }}'
-    data_tests:
-      - is_empty:
-          config:
-            severity: warn
-    columns:
-      - name: order_id
-        description: Order id as it came from the source (may be null).
-      - name: customer_id
-        description: Customer id as it came from the source (renamed from `user_id`).
-      - name: order_date
-        description: Order date as it came from the source.
-      - name: status
-        description: Status as it came from the source.
-      - name: quarantine_reason
-        description: '{{ doc("quarantine_reason") }}'
-        data_tests:
-          - not_null
-
   # --- payments ---------------------------------------------------------------
 
-  - name: base_payments
-    description: >
-      Ephemeral (a CTE, not a database object). Raw payments renamed and converted
-      to dollars, with a `quarantine_reason` per row. Feeds `stg_payments` and
-      `stg_payments_quarantine`.
-
   - name: stg_payments
-    description: Cleaned, valid payments. One row per payment; an order can have several. Invalid rows are in `stg_payments_quarantine`.
+    description: Raw payments renamed, amount in dollars. One row per source row, including invalid ones; `int_payments` filters them.
     columns:
       - name: payment_id
         description: Primary key of a payment.
@@ -79,11 +84,29 @@ models:
           - unique
           - not_null
       - name: order_id
-        description: The order this payment belongs to. Always a valid order in `stg_orders`.
+        description: The order this payment belongs to. May not be a valid order.
+      - name: payment_method
+        description: Payment method as it came from the source. May be outside `var('payment_methods')`.
+      - name: amount
+        description: '{{ doc("amount_dollars") }}'
+
+  - name: int_payments
+    description: >
+      Valid payments only. One row per payment; an order can have several. Drops
+      payments with a null id, a method not in `var('payment_methods')`, a null or
+      negative amount, or an order not in `int_orders`.
+    columns:
+      - name: payment_id
+        description: Primary key of a payment.
+        data_tests:
+          - unique
+          - not_null
+      - name: order_id
+        description: The order this payment belongs to. Always a valid order in `int_orders`.
         data_tests:
           - relationships:
               arguments:
-                to: ref('stg_orders')
+                to: ref('int_orders')
                 field: order_id
       - name: payment_method
         description: How the payment was made.
@@ -93,23 +116,7 @@ models:
                 values: "{{ var('payment_methods') }}"
       - name: amount
         description: '{{ doc("amount_dollars") }}'
-
-  - name: stg_payments_quarantine
-    description: '{{ doc("quarantine_model") }}'
-    data_tests:
-      - is_empty:
-          config:
-            severity: warn
-    columns:
-      - name: payment_id
-        description: Payment id as it came from the source (may be null).
-      - name: order_id
-        description: Order id as it came from the source. `unknown_order` if it isn't in `stg_orders`.
-      - name: payment_method
-        description: Payment method as it came from the source.
-      - name: amount
-        description: '{{ doc("amount_dollars") }}'
-      - name: quarantine_reason
-        description: '{{ doc("quarantine_reason") }}'
         data_tests:
-          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0

@@ -20,9 +20,9 @@ Critical = data silently lost, duplicated or corrupted, a secret or account iden
 ## Checklist
 
 ### dbt
-- [ ] Layers respected: bronze is seeds + `source()` only, silver one `stg_<entity>` view per source table (plus `_quarantine`), gold `dim_` / `fct_` tables on `ref()`; model names unique; materializations and schemas set per folder in `dbt_project.yml`
+- [ ] Layers respected: bronze is seeds + `source()` only, silver one `stg_<entity>` view per source table (rename/cast only) plus `int_<entity>` views for validation, gold `dim_` / `fct_` tables on `ref()`; model names unique; materializations and schemas set per folder in `dbt_project.yml`
 - [ ] Every key column has `unique` + `not_null`; every model and new column has a `description` (shared ones as doc blocks); test arguments nested under `arguments:`
-- [ ] Quarantine rules added to the `base_` model and to the `quarantine_reason` doc block; quarantine models keep the `is_empty` warn test
+- [ ] Validation rules live in the `int_` model, never in `stg_`; validity tests sit on the `int_` model; gold and other `int_` models read only `int_` models, never `stg_`
 - [ ] `fct_orders` stays incremental with `on_schema_change='fail'`; changes that reorder `vars.payment_methods` call out the needed `--full-refresh`; `assert_gold_revenue_matches_silver` still passes
 - [ ] Snapshots never dropped; nothing runs `--empty` against `dev`
 - [ ] `package-lock.yml` committed when `packages.yml` changes
