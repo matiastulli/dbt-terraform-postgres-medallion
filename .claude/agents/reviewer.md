@@ -24,7 +24,7 @@ Critical = data silently lost, duplicated or corrupted, a secret or account iden
 - [ ] Every key column has `unique` + `not_null`; every model and new column has a `description` (shared ones as doc blocks); test arguments nested under `arguments:`
 - [ ] Validation rules live in the `int_` model, never in `stg_`; validity tests sit on the `int_` model; gold and other `int_` models read only `int_` models, never `stg_`
 - [ ] `fct_orders` stays incremental with `on_schema_change='fail'`; changes that reorder `vars.payment_methods` call out the needed `--full-refresh`; `assert_gold_revenue_matches_silver` still passes
-- [ ] Snapshots never dropped; nothing runs `--empty` against `dev`
+- [ ] The leftover `dev_00_bronze.orders_snapshot` table is never dropped; nothing runs `--empty` against `dev`
 - [ ] `package-lock.yml` committed when `packages.yml` changes
 
 ### Terraform

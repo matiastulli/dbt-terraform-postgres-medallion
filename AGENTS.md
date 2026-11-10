@@ -22,7 +22,7 @@ dbt debug                       # check connection/config
 dbt seed                        # load seeds/*.csv into Postgres
 dbt run                         # build models
 dbt test                        # run data tests
-dbt build                       # seed + run + test + snapshot in DAG order
+dbt build                       # seed + run + test in DAG order
 dbt build --select stg_orders   # a single model (plus its tests)
 dbt build --select +fct_orders  # a model and everything upstream
 dbt build --select 01_silver    # a whole layer (folder)

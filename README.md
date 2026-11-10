@@ -123,7 +123,7 @@ source .venv/bin/activate && source .env   # run from the repo root
 
 | Command | What it does |
 |---|---|
-| `dbt build` | Everything in DAG order: seeds, models, snapshots, tests. A failing test **skips** everything downstream |
+| `dbt build` | Everything in DAG order: seeds, models, tests. A failing test **skips** everything downstream |
 | `dbt run` | Models only, no tests |
 | `dbt test` | Tests only, no rebuilding |
 | `dbt seed` | Load `seeds/*.csv` into `dev_00_bronze` |
@@ -146,7 +146,7 @@ These work with `build`, `run`, `test`, `ls`, `compile` and `show`.
 | `tag:bronze` / `tag:silver` / `tag:gold` | A whole medallion layer, including bronze sources and seeds |
 | `source:jaffle_shop+` | Everything built on a source |
 | `config.materialized:incremental` | By config |
-| `resource_type:snapshot` | By type (`model`, `test`, `seed`, `snapshot`...) |
+| `resource_type:seed` | By type (`model`, `test`, `seed`, `snapshot`...) |
 | `test_type:singular` | Only SQL tests in `tests/` |
 | `stg_orders,resource_type:test` | **Intersection** (comma): tests on `stg_orders` |
 | `--exclude resource_type:test` | Leave something out |
@@ -259,7 +259,7 @@ Once applied, `import` and `moved` blocks can be deleted.
 
 | Command | Why be careful |
 |---|---|
-| `terraform -chdir=terraform destroy` | Drops the **database**, schemas and roles, including the snapshot history, which can't be rebuilt |
+| `terraform -chdir=terraform destroy` | Drops the **database**, schemas and roles, including the leftover `orders_snapshot` table, whose history can't be rebuilt |
 | `terraform -chdir=terraform apply -auto-approve` | Skips the review step (fine in CI on a throwaway database, not locally) |
 | Deleting `terraform.tfstate` | Terraform forgets what it owns and will try to create everything again |
 
