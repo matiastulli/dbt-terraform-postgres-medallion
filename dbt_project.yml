@@ -16,23 +16,32 @@ clean-targets: ["target", "dbt_packages"]
 
 # Project-wide variables, read with var('name') in models, tests and macros.
 vars:
-  # Single source of truth: drives the per-method columns in fct_orders and the
-  # accepted_values test on stg_payments.payment_method. Order = column order.
+  # Single source of truth: drives the per-method columns in fct_orders, the
+  # filter in int_payments and its accepted_values test. Order = column order.
   payment_methods: ["credit_card", "coupon", "bank_transfer", "gift_card"]
-  # Valid order statuses: drives the quarantine rule in base_orders and the
-  # accepted_values test on stg_orders.status.
+  # Valid order statuses: drives the filter in int_orders and the
+  # accepted_values test on int_orders.status.
   order_statuses: ["placed", "shipped", "completed", "return_pending", "returned"]
+  # Calendar range of dim_dates (end is exclusive). Must cover every order_date;
+  # the relationships tests on the facts fail if it doesn't.
+  dim_dates_start: "2018-01-01"
+  dim_dates_end: "2019-01-01"
 
 # Medallion layers. Folder names match schema names; dbt prefixes the target
 # schema, so these land in dev_00_bronze, dev_01_silver, dev_02_gold.
+# Each layer also gets a tag (select it with tag:bronze, tag:silver, tag:gold)
+# and a node colour in the docs lineage graph. Sources can't be coloured, so
+# they stay dbt's default green.
 seeds:
   jaffle_shop:
     +schema: 00_bronze
+    +tags: ["bronze"]
+    +docs:
+      node_color: "#CD7F32"
 
-# Snapshots are history of raw data, so they live in the bronze layer too.
-snapshots:
+sources:
   jaffle_shop:
-    +schema: 00_bronze
+    +tags: ["bronze"]
 
 models:
   jaffle_shop:
@@ -45,11 +54,12 @@ models:
     "01_silver":
       +materialized: view
       +schema: 01_silver
-      jaffle_shop:
-        # base_* models validate raw rows for stg_* and stg_*_quarantine.
-        # Ephemeral = compiled as a CTE into those models, never built in Postgres.
-        base:
-          +materialized: ephemeral
+      +tags: ["silver"]
+      +docs:
+        node_color: "#7D8590"
     "02_gold":
       +materialized: table
       +schema: 02_gold
+      +tags: ["gold"]
+      +docs:
+        node_color: "#B8860B"

@@ -1,11 +1,23 @@
--- Valid payments only. Rows that break a rule go to stg_payments_quarantine instead;
--- the rules themselves live in base/base_payments.sql.
+-- Staging: raw payments renamed and converted to dollars, one row per source row.
+-- No filtering here; invalid payments are dropped in int_payments.
 
-select
-    payment_id,
-    order_id,
-    payment_method,
-    amount
+with source as (
 
-from {{ ref('base_payments') }}
-where quarantine_reason is null
+    select * from {{ source('jaffle_shop', 'raw_payments') }}
+
+),
+
+renamed as (
+
+    select
+        id as payment_id,
+        order_id,
+        payment_method,
+        -- raw amount is stored in cents (macro lives in macros/cents_to_dollars.sql)
+        {{ cents_to_dollars('amount') }} as amount
+
+    from source
+
+)
+
+select * from renamed

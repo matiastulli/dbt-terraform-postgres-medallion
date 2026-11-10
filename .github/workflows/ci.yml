@@ -69,7 +69,7 @@ jobs:
         # Silver reads seeds via source(), which doesn't order them first; load explicitly.
         run: dbt seed
 
-      - name: dbt build (models, snapshots, tests)
+      - name: dbt build (models, tests)
         run: dbt build
 
       - name: dbt docs generate

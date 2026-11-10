@@ -1,11 +1,22 @@
--- Valid orders only. Rows that break a rule go to stg_orders_quarantine instead;
--- the rules themselves live in base/base_orders.sql.
+-- Staging: raw orders renamed, one row per source row. No filtering here;
+-- invalid orders are dropped in int_orders.
 
-select
-    order_id,
-    customer_id,
-    order_date,
-    status
+with source as (
 
-from {{ ref('base_orders') }}
-where quarantine_reason is null
+    select * from {{ source('jaffle_shop', 'raw_orders') }}
+
+),
+
+renamed as (
+
+    select
+        id as order_id,
+        user_id as customer_id,
+        order_date,
+        status
+
+    from source
+
+)
+
+select * from renamed

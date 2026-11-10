@@ -23,7 +23,13 @@ models:
                 to: ref('dim_customers')
                 field: customer_id
       - name: order_date
-        description: Date the order was placed.
+        description: Date the order was placed. Joins to `dim_dates`.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_dates')
+                field: date_day
       - name: status
         description: '{{ doc("order_status") }}'
       - name: credit_card_amount
@@ -65,3 +71,72 @@ models:
                 min_value: 0
       - name: lifetime_value
         description: Total paid by the customer across all orders, in dollars.
+
+  - name: fct_payments
+    description: >
+      Payments. One row per payment; an order can have several. Same money as
+      `fct_orders`, at a finer grain. Raw payments have no date, so `order_date`
+      is the date of the order the payment belongs to.
+    columns:
+      - name: payment_id
+        description: Primary key of a payment.
+        data_tests:
+          - unique # guards the grain: one row per payment
+          - not_null
+      - name: order_id
+        description: The order this payment belongs to. Joins to `fct_orders`.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('fct_orders')
+                field: order_id
+      - name: customer_id
+        description: The customer who placed the order. Joins to `dim_customers`.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customers')
+                field: customer_id
+      - name: order_date
+        description: Date of the order this payment belongs to (payments have no date of their own). Joins to `dim_dates`.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_dates')
+                field: date_day
+      - name: payment_method
+        description: How the payment was made.
+      - name: amount
+        description: '{{ doc("amount_dollars") }}'
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+
+  - name: dim_dates
+    description: Calendar. One row per day between `var('dim_dates_start')` and `var('dim_dates_end')` (exclusive), generated with `dbt_utils.date_spine`.
+    columns:
+      - name: date_day
+        description: Primary key. The calendar day.
+        data_tests:
+          - unique # guards the grain: one row per day
+          - not_null
+      - name: year
+        description: Calendar year.
+      - name: quarter
+        description: Calendar quarter, 1 to 4.
+      - name: month
+        description: Month number, 1 to 12.
+      - name: month_name
+        description: Month name in English, e.g. `January`.
+      - name: day_of_month
+        description: Day of the month, 1 to 31.
+      - name: day_of_week
+        description: ISO day of the week, Monday = 1 to Sunday = 7.
+      - name: day_name
+        description: Day name in English, e.g. `Monday`.
+      - name: is_weekend
+        description: True on Saturday and Sunday.

@@ -1,23 +1,18 @@
 -- Singular test: passes when it returns zero rows.
--- Revenue must survive the silver -> gold joins without being lost or double-counted
--- (e.g. payments for orders missing from stg_orders would be dropped).
+-- Revenue must survive silver -> gold without being lost or double-counted.
+-- Three totals must match: valid payments in silver, the payment-grain fact,
+-- and the order-grain fact (which can drift, since it's incremental).
 
-with silver as (
+with totals as (
 
-    select sum(amount) as total from {{ ref('stg_payments') }}
-
-),
-
-gold as (
-
-    select sum(amount) as total from {{ ref('fct_orders') }}
+    select
+        (select sum(amount) from {{ ref('int_payments') }}) as silver_payments,
+        (select sum(amount) from {{ ref('fct_payments') }}) as gold_payments,
+        (select sum(amount) from {{ ref('fct_orders') }}) as gold_orders
 
 )
 
-select
-    silver.total as silver_total,
-    gold.total as gold_total
-
-from silver
-cross join gold
-where silver.total <> gold.total
+select *
+from totals
+where silver_payments <> gold_payments
+    or silver_payments <> gold_orders
