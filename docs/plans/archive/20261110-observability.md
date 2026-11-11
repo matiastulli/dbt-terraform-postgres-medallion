@@ -1,5 +1,5 @@
 -----
-Status: #IN_PROGRESS, building on feat/observability
+Status: #DONE, merged in PR #5, CI green
 -----
 
 # Observability: dropped rows and run log
@@ -44,7 +44,7 @@ Out of scope, next steps: volume rules against `run_log` history (for example, `
 - [x] `dbt build --vars '{max_dropped_rows: 1}'` turns both warnings into errors and skips the models downstream of `int_orders` and `int_payments`. A normal `dbt build` afterwards restores everything.
 - [x] Two `dbt build`s in a row leave two `invocation_id`s in `run_log`. Rows are appended, never replaced.
 - [x] The `analyst` role can select from `dev_audit` in DBeaver.
-- [ ] CI passes.
+- [x] CI passes.
 
 ## Reference
 
