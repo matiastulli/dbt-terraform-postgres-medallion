@@ -54,6 +54,15 @@ models:
         data_tests:
           - unique
           - not_null
+          - dropped_rows:
+              name: int_orders_dropped_rows
+              description: Rows of stg_orders that int_orders dropped, stored in dev_audit.
+              arguments:
+                upstream: ref('stg_orders')
+              config:
+                store_failures: true
+                warn_if: ">0"
+                error_if: ">{{ var('max_dropped_rows') }}"
       - name: customer_id
         description: The customer who placed the order. Always in `int_customers`.
         data_tests:
@@ -101,6 +110,15 @@ models:
         data_tests:
           - unique
           - not_null
+          - dropped_rows:
+              name: int_payments_dropped_rows
+              description: Rows of stg_payments that int_payments dropped, stored in dev_audit.
+              arguments:
+                upstream: ref('stg_payments')
+              config:
+                store_failures: true
+                warn_if: ">0"
+                error_if: ">{{ var('max_dropped_rows') }}"
       - name: order_id
         description: The order this payment belongs to. Always a valid order in `int_orders`.
         data_tests:

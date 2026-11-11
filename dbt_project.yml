@@ -26,6 +26,14 @@ vars:
   # the relationships tests on the facts fail if it doesn't.
   dim_dates_start: "2018-01-01"
   dim_dates_end: "2019-01-01"
+  # dropped_rows tests (int_ models) warn above 0 dropped rows and fail the build
+  # above this many. Override per run: --vars '{max_dropped_rows: 1}'.
+  max_dropped_rows: 10
+
+# Runs once after every dbt build/run/test/seed: appends this run's results to
+# dev_audit.run_log (macros/log_run_results.sql).
+on-run-end:
+  - "{{ log_run_results(results) }}"
 
 # Medallion layers. Folder names match schema names; dbt prefixes the target
 # schema, so these land in dev_00_bronze, dev_01_silver, dev_02_gold.
@@ -42,6 +50,12 @@ seeds:
 sources:
   jaffle_shop:
     +tags: ["bronze"]
+
+# Tests that set store_failures write their failing rows here (dev_audit), not
+# into a layer schema. Tests without it never create anything.
+data_tests:
+  jaffle_shop:
+    +schema: audit
 
 models:
   jaffle_shop:
